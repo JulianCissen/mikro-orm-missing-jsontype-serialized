@@ -30,6 +30,7 @@ afterAll(async () => {
 test('serialized object should be typed properly', async () => {
   const user = orm.em.create(User, {});
   const serialized = serialize(user);
+  // Property 'data' does not exist on type 'EntityDTO<Loaded<User, never>, {}>'.
   serialized.data;
 
   // This does work, but shouldn't be required as data is not a relation.
