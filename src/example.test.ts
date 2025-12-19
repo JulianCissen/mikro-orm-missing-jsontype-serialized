@@ -1,22 +1,14 @@
-import { Entity, MikroORM, PrimaryKey, Property } from '@mikro-orm/sqlite';
+import { Entity, JsonType, MikroORM, PrimaryKey, Property, serialize } from '@mikro-orm/sqlite';
 
 @Entity()
 class User {
-
   @PrimaryKey()
   id!: number;
 
-  @Property()
-  name: string;
+  @Property({ type: JsonType })
+  data: Record<string, string> = {};
 
-  @Property({ unique: true })
-  email: string;
-
-  constructor(name: string, email: string) {
-    this.name = name;
-    this.email = email;
-  }
-
+  constructor() {}
 }
 
 let orm: MikroORM;
@@ -35,17 +27,12 @@ afterAll(async () => {
   await orm.close(true);
 });
 
-test('basic CRUD example', async () => {
-  orm.em.create(User, { name: 'Foo', email: 'foo' });
-  await orm.em.flush();
-  orm.em.clear();
+test('serialized object should be typed properly', async () => {
+  const user = orm.em.create(User, {});
+  const serialized = serialize(user);
+  serialized.data;
 
-  const user = await orm.em.findOneOrFail(User, { email: 'foo' });
-  expect(user.name).toBe('Foo');
-  user.name = 'Bar';
-  orm.em.remove(user);
-  await orm.em.flush();
-
-  const count = await orm.em.count(User, { email: 'foo' });
-  expect(count).toBe(0);
+  // This does work, but shouldn't be required as data is not a relation.
+  const serialized2 = serialize(user, { populate: ['data'] });
+  serialized2.data;
 });
